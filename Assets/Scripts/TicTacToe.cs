@@ -2,18 +2,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-enum PlayerType
+
+public enum PlayerType
 {
     None = -1,
     Human = 0,
     Computer = 1
 }
-
-enum Side
+public enum Side
 {
     Circle = 0,
     Cross = 1
 }
+
+public enum Difficulty
+{
+	None = -1,
+	Easy = 0,
+	Medium = 1,
+	Hard = 2
+}
+
 public class TicTacToe : MonoBehaviour
 {
     [SerializeField]private List<TextContainerRow> textContainers = new List<TextContainerRow>();
@@ -24,11 +33,17 @@ public class TicTacToe : MonoBehaviour
 	[SerializeField]private LayerMask textContainerMask;
 
     private List<List<PlayerType>> _board;
-	private int _functionCalls = 0;
-    
-	private PlayerType _winner = PlayerType.None;
 
+	private int _maxDepth = int.MinValue;
+	private int _functionCalls = 0;
+	private PlayerType _winner = PlayerType.None;
 	private bool _quitGame = false;
+	private Difficulty _difficulty = Difficulty.None;
+
+	public void SetDifficulty(Difficulty difficulty)
+	{
+		_difficulty = difficulty;
+	}
 
     private int CountVacants()
     {
@@ -139,9 +154,10 @@ public class TicTacToe : MonoBehaviour
 		 }
 	 }
 
-	 void BestMove()
+	 void BestMove(int depth)
 	 {
 		 _functionCalls = 0;
+		 _maxDepth = 0;
 		 int bestScore = int.MinValue;
 		 int moveX = -1;
 		 int moveY = -1;
@@ -153,7 +169,7 @@ public class TicTacToe : MonoBehaviour
 				 if (_board[i][j] == PlayerType.None)
 				 {
 					 _board[i][j] = PlayerType.Computer;
-					 int score = Minimax(0, false,int.MinValue,int.MaxValue);
+					 int score = Minimax(0, depth, false,int.MinValue,int.MaxValue);
 					 _board[i][j] = PlayerType.None;
 					 if (score > bestScore)
 					 {
@@ -166,6 +182,7 @@ public class TicTacToe : MonoBehaviour
 		 }
 
 		Debug.Log("Minimax Function Calls: " + _functionCalls);
+		Debug.Log("Max Depth: " + _maxDepth);
 		if(moveX != -1 && moveY != -1)
 		{
 			_board[moveX][moveY] = PlayerType.Computer;
@@ -173,8 +190,18 @@ public class TicTacToe : MonoBehaviour
 		 
 	 }
 
-	 int Minimax(int depth, bool isMaximizing,int alpha, int beta)
+	 int Minimax(int depth, int maxDepth, bool isMaximizing,int alpha, int beta)
 	 {
+		if(depth > maxDepth)
+		{
+			if(isMaximizing)
+			{
+				return -1;
+			}
+			
+			return 1;
+		}
+		 _maxDepth = Mathf.Max(_maxDepth, depth);
 		 _functionCalls++;
 		 if (Winning(PlayerType.Human))
 		 { 
@@ -200,7 +227,7 @@ public class TicTacToe : MonoBehaviour
 					 if (_board[i][j] == PlayerType.None)
 					 {
 						 _board[i][j] = PlayerType.Computer;
-						 int score = Minimax(depth + 1, false,alpha,beta);
+						 int score = Minimax(depth + 1,maxDepth, false,alpha,beta);
 						 bestScore = Mathf.Max(bestScore, score);
 						 _board[i][j] = PlayerType.None;
 
@@ -224,7 +251,7 @@ public class TicTacToe : MonoBehaviour
 					 if (_board[i][j] == PlayerType.None)
 					 {
 						 _board[i][j] = PlayerType.Human;
-						 int score = Minimax(depth + 1, true, alpha, beta);
+						 int score = Minimax(depth + 1, maxDepth, true, alpha, beta);
 						 bestScore = Mathf.Min(bestScore, score);
 						 _board[i][j] = PlayerType.None;
 
@@ -302,8 +329,21 @@ public class TicTacToe : MonoBehaviour
 						if(j != -1)
 						{
 							_board[i][j] = PlayerType.Human;
+							switch(_difficulty)
+							{
+								case Difficulty.Easy:
+													 BestMove(2);
+													 break;
+								
+								case Difficulty.Medium:
+													 BestMove(4);
+													 break;
+													
+								case Difficulty.Hard:
+													 BestMove(7);
+													 break;
+							}
 							
-							BestMove();
 							break;
 						}
 					}
