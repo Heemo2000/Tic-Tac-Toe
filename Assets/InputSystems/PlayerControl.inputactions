@@ -1,0 +1,157 @@
+{
+    "name": "PlayerControl",
+    "maps": [
+        {
+            "name": "PlayerActionMap",
+            "id": "5a351081-ff3a-41c0-a1cd-772a7cb4280f",
+            "actions": [
+                {
+                    "name": "ScreenClick",
+                    "type": "Value",
+                    "id": "58381fa1-d372-49f5-aaf6-42e72db14e84",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "ClickPosition",
+                    "type": "Value",
+                    "id": "aa5c02be-d8e0-495b-bd80-d8dfe566567b",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Device Orientation",
+                    "type": "Value",
+                    "id": "66679d33-6ffc-43fb-844e-2e5afca9c7d7",
+                    "expectedControlType": "Vector3",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "Mouse",
+                    "id": "dbf41b19-3938-4fd8-99ab-02b205f9f2c7",
+                    "path": "1DAxis(minValue=0,whichSideWins=2)",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ScreenClick",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "a6dba6ac-35ea-4724-8e71-0ba7aa7d0502",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ScreenClick",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "148a57ab-cf28-4899-a69b-d7d1c6a4b288",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ScreenClick",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Mobile",
+                    "id": "514f6647-4bec-454f-9333-e7d3b6bd4fe2",
+                    "path": "1DAxis(minValue=0,whichSideWins=2)",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ScreenClick",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "aab549d4-7bb4-4db0-93a5-9621c530f38c",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ScreenClick",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "94b862b0-0846-41d1-b363-90d8a8bd3032",
+                    "path": "<Touchscreen>/Press",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ScreenClick",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "479daccc-835d-4ad6-9fb9-38e26b710b7e",
+                    "path": "<Mouse>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "PlayerControlScheme",
+                    "action": "ClickPosition",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "456e3f2d-6478-4337-bf78-f53aa0c8eebc",
+                    "path": "<Pointer>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "PlayerControlScheme",
+                    "action": "ClickPosition",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "fee72343-954d-4eb4-a3be-0526bbb50d46",
+                    "path": "<Gyroscope>/angularVelocity",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Device Orientation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": [
+        {
+            "name": "PlayerControlScheme",
+            "bindingGroup": "PlayerControlScheme",
+            "devices": [
+                {
+                    "devicePath": "<Mouse>",
+                    "isOptional": false,
+                    "isOR": false
+                },
+                {
+                    "devicePath": "<Pointer>",
+                    "isOptional": false,
+                    "isOR": false
+                }
+            ]
+        }
+    ]
+}

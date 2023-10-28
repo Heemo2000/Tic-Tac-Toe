@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
+using Gyroscope = UnityEngine.InputSystem.Gyroscope;
 
 public enum PlayerType
 {
@@ -27,19 +29,134 @@ public class TicTacToe : MonoBehaviour
 {
     [SerializeField]private List<TextContainerRow> textContainers = new List<TextContainerRow>();
 	[SerializeField]private Side humanSide = Side.Circle;
-	[SerializeField]private Camera lookCamera;
-
+	
 	[SerializeField]private float detectDistance = 50f;
 	[SerializeField]private LayerMask textContainerMask;
 
+	
+
+	[Header("Settings for difficulty:")]
+	[Range(0.0f,1.0f)]
+	[SerializeField]private float easyRandomMoveProb = 0.9f;
+
+	[Range(0.0f,1.0f)]
+	[SerializeField]private float medRandomMoveProb = 0.5f;
+
+	[Range(0.0f,1.0f)]
+	[SerializeField]private float hardRandomMoveProb = 0.2f;
+
+	[Header("Settings for device orientation(only mobile): ")]
+	[Min(0f)]
+	[SerializeField]private float rotationSpeed = 20f;
+	[SerializeField]private Vector2 minAngle = Vector2.zero;
+	[SerializeField]private Vector2 maxAngle = Vector2.zero;
+
     private List<List<PlayerType>> _board;
 
+	private PlayerInput _playerInput;
 	private int _maxDepth = int.MinValue;
 	private int _functionCalls = 0;
 	private PlayerType _winner = PlayerType.None;
 	private bool _quitGame = false;
 	private Difficulty _difficulty = Difficulty.None;
+	private Vector2 _mousePosition = Vector2.zero;
+	private Vector2 _targetDeviceOrientation = Vector2.zero;
+	private Vector2 _currentDeviceOrientation = Vector2.zero;
 
+	public void OnScreenClick(InputAction.CallbackContext context)
+	{
+		Debug.Log("OnScreenClick is called");
+		
+		if(_quitGame)
+		{
+			return;
+		}
+
+		bool pressed = context.ReadValue<float>() == 1;
+
+		if(pressed)
+		{
+				if(!(_winner == PlayerType.None && CountVacants() > 0))
+				{
+					switch(_winner)
+					{
+						case PlayerType.Human: Debug.Log("Player Wins");
+											   break;
+						
+						case PlayerType.Computer: Debug.Log("Computer Wins");
+												  break;
+					}
+					return;
+				}
+
+				//Debug.Log("Mouse position using old system: " + Input.mousePosition);
+
+				Debug.Log("Mouse Position using new system: " + _mousePosition);
+				Ray ray = _playerInput.camera.ScreenPointToRay(_mousePosition);
+
+				if(Physics.Raycast(ray, out RaycastHit hit, detectDistance, textContainerMask.value))
+				{
+					TextContainer textContainer = hit.transform.GetComponent<TextContainer>();
+
+					for(int i = 0; i < textContainers.Count; i++)
+					{
+						var row = textContainers[i];
+						int j = row.elements.FindIndex(0,row.elements.Count,(TextContainer container)=> textContainer.Equals(container));
+						if(j != -1 && _board[i][j] == PlayerType.None)
+						{
+							_board[i][j] = PlayerType.Human;
+							PrintRequiredText(_board[i][j],textContainer);
+							switch(_difficulty)
+							{
+								case Difficulty.Easy:
+													 ChooseMove(easyRandomMoveProb);
+													 break;
+								
+								case Difficulty.Medium:
+													 ChooseMove(medRandomMoveProb);
+													 break;
+													
+								case Difficulty.Hard:
+													 ChooseMove(hardRandomMoveProb);
+													 break;
+							}
+							
+							textContainer.OnClick?.Invoke();
+							break;
+						}
+					}
+				}
+
+				if (Winning(PlayerType.Human))
+			 	{
+					_winner = PlayerType.Human;
+			 	}
+			 	else if (Winning(PlayerType.Computer))
+			 	{
+					_winner = PlayerType.Computer;
+			 	}
+				
+		}	
+	}
+
+	public void OnGetScreenPosition(InputAction.CallbackContext context)
+	{
+		Debug.Log("OnGetScreenPosition is called");
+		_mousePosition = context.ReadValue<Vector2>();
+	}
+
+	public void OnDeviceRotate(InputAction.CallbackContext context)
+	{
+		Debug.Log("OnDeviceRotation was called");
+		Vector3 angularVelocity = context.ReadValue<Vector3>();
+		
+		_targetDeviceOrientation.x = Mathf.Clamp(_currentDeviceOrientation.x + angularVelocity.x, minAngle.x, maxAngle.x);
+		_targetDeviceOrientation.y = Mathf.Clamp(_currentDeviceOrientation.y + angularVelocity.y, minAngle.y, maxAngle.y);
+
+		Debug.Log("Target Device Rotation : " + _targetDeviceOrientation);
+		
+
+	}
 	public void SetDifficulty(Difficulty difficulty)
 	{
 		_difficulty = difficulty;
@@ -62,7 +179,7 @@ public class TicTacToe : MonoBehaviour
 		 return result;
     }
 
-    bool Winning(PlayerType player)
+    private bool Winning(PlayerType player)
 	 {
 		 bool result = false;
 		 //Horizontal
@@ -96,7 +213,7 @@ public class TicTacToe : MonoBehaviour
 		 return result;
 	 }
 
-     bool IsItATie()
+    private bool IsItATie()
 	 {
 		 if (Winning(PlayerType.Human))
 		 {
@@ -111,50 +228,80 @@ public class TicTacToe : MonoBehaviour
 		 return CountVacants() == 0;
 	 }
 
-     private void UpdateBoardGraphics()
+	private void PrintRequiredText(PlayerType playerType, TextContainer textContainer)
+	{
+		switch(playerType)
+        {
+			case PlayerType.None:
+									textContainer.SetText("");
+									break;
+        	case PlayerType.Human:
+        	                        if(humanSide == Side.Circle)
+        	                        {
+        	                            textContainer.SetText("O");
+        	                        }
+        	                        else
+        	                        {
+        	                            textContainer.SetText("X");
+        	                        }
+        	                        break;
+        	case PlayerType.Computer:
+        	                        if(humanSide == Side.Circle)
+        	                        {
+        	                            textContainer.SetText("X");
+        	                        }
+        	                        else
+        	                        {
+        	                            textContainer.SetText("O");
+        	                        }
+        	                        break;
+
+        }
+
+		textContainer.OnClick?.Invoke();
+	}
+    
+
+	private void ChooseMove(float randomMoveProbability)
+	{
+		if(CountVacants() == 0)
+		{
+			return;
+		}
+		Random.InitState((int)System.DateTime.Now.Ticks);
+
+		float probability = Random.value;
+		Debug.Log("Probability: " + probability);
+
+		if(probability <= randomMoveProbability)
+		{
+			RandomMove();
+		}
+		else
+		{
+			BestMove();
+		}
+	}
+
+	 private void RandomMove()
 	 {
-		 //std::cout << "Human : O" << std::endl;
-		 //std::cout << "Computer : X" << std::endl;
+		Debug.Log("RandomMove called");
+		Random.InitState((int)System.DateTime.Now.Ticks);
 
+		int moveX = Random.Range(0,3);
+		int moveY = Random.Range(0,3);
 
+		while(_board[moveX][moveY] != PlayerType.None)
+		{
+			Debug.Log("RandomMove running");
+			moveX = Random.Range(0,3);
+			moveY = Random.Range(0,3);
+		}
 
-		 for (int i = 0; i < 3; i++)
-		 {
-			 for (int j = 0; j < 3; j++)
-			 {
-				 PlayerType current = _board[i][j];
-				 switch(current)
-                 {
-					case PlayerType.None:
-											textContainers[i].elements[j].SetText("");
-											break;
-                    case PlayerType.Human:
-                                            if(humanSide == Side.Circle)
-                                            {
-                                                textContainers[i].elements[j].SetText("O");
-                                            }
-                                            else
-                                            {
-                                                textContainers[i].elements[j].SetText("X");
-                                            }
-                                            break;
-                    case PlayerType.Computer:
-                                            if(humanSide == Side.Circle)
-                                            {
-                                                textContainers[i].elements[j].SetText("X");
-                                            }
-                                            else
-                                            {
-                                                textContainers[i].elements[j].SetText("O");
-                                            }
-                                            break;
-					
-                 }
-			 }
-		 }
+		_board[moveX][moveY] = PlayerType.Computer;
+		PrintRequiredText(_board[moveX][moveY], textContainers[moveX].elements[moveY]);
 	 }
-
-	 void BestMove(int depth)
+	 private void BestMove()
 	 {
 		 _functionCalls = 0;
 		 _maxDepth = 0;
@@ -169,7 +316,7 @@ public class TicTacToe : MonoBehaviour
 				 if (_board[i][j] == PlayerType.None)
 				 {
 					 _board[i][j] = PlayerType.Computer;
-					 int score = Minimax(0, depth, false,int.MinValue,int.MaxValue);
+					 int score = Minimax(0, false,int.MinValue,int.MaxValue);
 					 _board[i][j] = PlayerType.None;
 					 if (score > bestScore)
 					 {
@@ -186,21 +333,13 @@ public class TicTacToe : MonoBehaviour
 		if(moveX != -1 && moveY != -1)
 		{
 			_board[moveX][moveY] = PlayerType.Computer;
+			PrintRequiredText(_board[moveX][moveY], textContainers[moveX].elements[moveY]);
 		}
 		 
 	 }
 
-	 int Minimax(int depth, int maxDepth, bool isMaximizing,int alpha, int beta)
+	 int Minimax(int depth, bool isMaximizing,int alpha, int beta)
 	 {
-		if(depth > maxDepth)
-		{
-			if(isMaximizing)
-			{
-				return -1;
-			}
-			
-			return 1;
-		}
 		 _maxDepth = Mathf.Max(_maxDepth, depth);
 		 _functionCalls++;
 		 if (Winning(PlayerType.Human))
@@ -227,7 +366,7 @@ public class TicTacToe : MonoBehaviour
 					 if (_board[i][j] == PlayerType.None)
 					 {
 						 _board[i][j] = PlayerType.Computer;
-						 int score = Minimax(depth + 1,maxDepth, false,alpha,beta);
+						 int score = Minimax(depth + 1, false,alpha,beta);
 						 bestScore = Mathf.Max(bestScore, score);
 						 _board[i][j] = PlayerType.None;
 
@@ -251,7 +390,7 @@ public class TicTacToe : MonoBehaviour
 					 if (_board[i][j] == PlayerType.None)
 					 {
 						 _board[i][j] = PlayerType.Human;
-						 int score = Minimax(depth + 1, maxDepth, true, alpha, beta);
+						 int score = Minimax(depth + 1, true, alpha, beta);
 						 bestScore = Mathf.Min(bestScore, score);
 						 _board[i][j] = PlayerType.None;
 
@@ -270,6 +409,7 @@ public class TicTacToe : MonoBehaviour
 
 	 private void Awake() {
         _board = new List<List<PlayerType>>();
+		_playerInput = GetComponent<PlayerInput>();
 
         for(int i = 0; i < 3; i++)
         {
@@ -280,8 +420,13 @@ public class TicTacToe : MonoBehaviour
 
 	private void Start() {
 		_winner = PlayerType.None;
+		InputSystem.EnableDevice(Gyroscope.current); 
 	}
-	private void Update() {
+
+	private void Update() 
+	{
+		_currentDeviceOrientation = Vector2.Lerp(_currentDeviceOrientation, _targetDeviceOrientation,rotationSpeed * Time.deltaTime);
+		transform.rotation = Quaternion.Euler(_currentDeviceOrientation);
 		if(_quitGame)
 		{
 			return;
@@ -301,64 +446,6 @@ public class TicTacToe : MonoBehaviour
 			_quitGame = true;
 			return;
 		}
-		if(Input.GetMouseButtonDown(0))
-			{
-				if(!(_winner == PlayerType.None && CountVacants() > 0))
-				{
-					switch(_winner)
-					{
-						case PlayerType.Human: Debug.Log("Player Wins");
-											   break;
-						
-						case PlayerType.Computer: Debug.Log("Computer Wins");
-												  break;
-					}
-					return;
-				}
 
-				Ray ray = lookCamera.ScreenPointToRay(Input.mousePosition);
-
-				if(Physics.Raycast(ray,out RaycastHit hit, detectDistance, textContainerMask.value))
-				{
-					TextContainer textContainer = hit.transform.GetComponent<TextContainer>();
-
-					for(int i = 0; i < textContainers.Count; i++)
-					{
-						var row = textContainers[i];
-						int j = row.elements.FindIndex(0,row.elements.Count,(TextContainer container)=> textContainer.Equals(container));
-						if(j != -1)
-						{
-							_board[i][j] = PlayerType.Human;
-							switch(_difficulty)
-							{
-								case Difficulty.Easy:
-													 BestMove(2);
-													 break;
-								
-								case Difficulty.Medium:
-													 BestMove(4);
-													 break;
-													
-								case Difficulty.Hard:
-													 BestMove(7);
-													 break;
-							}
-							
-							break;
-						}
-					}
-				}
-
-				if (Winning(PlayerType.Human))
-			 	{
-					_winner = PlayerType.Human;
-			 	}
-			 	else if (Winning(PlayerType.Computer))
-			 	{
-					_winner = PlayerType.Computer;
-			 	}
-				UpdateBoardGraphics();
-					
-			}
 	}
 }
