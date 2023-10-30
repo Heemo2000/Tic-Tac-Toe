@@ -1,6 +1,9 @@
 {
   "dependencies": {
     "com.ikaroon.tmp3d": "https://github.com/Ikaroon/TMP3D.git",
+    "com.unity.2d.animation": "9.0.3",
+    "com.unity.2d.sprite": "1.0.0",
+    "com.unity.2d.spriteshape": "9.0.2",
     "com.unity.adaptiveperformance.google.android": "1.2.1",
     "com.unity.adaptiveperformance.samsung.android": "5.0.0",
     "com.unity.collab-proxy": "2.2.0",

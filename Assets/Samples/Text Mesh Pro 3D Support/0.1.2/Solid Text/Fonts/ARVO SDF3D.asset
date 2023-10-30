@@ -5406,6 +5406,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - OUTLINE_ON
   - _MAXSTEPS_96
   - _RAYMARCHER_SDF
   - _VOLUMEMODE_SURFACE
