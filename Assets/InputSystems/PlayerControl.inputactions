@@ -92,7 +92,7 @@
                 {
                     "name": "positive",
                     "id": "94b862b0-0846-41d1-b363-90d8a8bd3032",
-                    "path": "<Touchscreen>/Press",
+                    "path": "<Touchscreen>/primaryTouch/tap",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

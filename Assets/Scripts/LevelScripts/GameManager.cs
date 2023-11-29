@@ -200,9 +200,12 @@ public class GameManager : GenericSingleton<GameManager>
         mediumConfig.background.SetActive(false);
         hardConfig.background.SetActive(false);
 
-        mainMenuCanvas.gameObject.SetActive(true);
         settingsCanvas.gameObject.SetActive(false);
         difficultyCanvas.gameObject.SetActive(false);
+        pausedCanvas.gameObject.SetActive(false);
+        gameplayCanvas.gameObject.SetActive(false);
+        gameOverCanvas.gameObject.SetActive(false);
+        mainMenuCanvas.gameObject.SetActive(true);
 
         _currentState = GameState.None;   
         ticTacToe.gameObject.SetActive(true);

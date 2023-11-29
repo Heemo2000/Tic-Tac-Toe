@@ -32,9 +32,7 @@ public class TicTacToe : MonoBehaviour
 	
 	[SerializeField]private float detectDistance = 50f;
 	[SerializeField]private LayerMask textContainerMask;
-
-	
-
+	[SerializeField]private float enemyMoveTimeInterval = 0.5f;
 	[Header("Settings for difficulty:")]
 	[Range(0.0f,1.0f)]
 	[SerializeField]private float easyRandomMoveProb = 0.9f;
@@ -56,6 +54,7 @@ public class TicTacToe : MonoBehaviour
 	private PlayerInput _playerInput;
 	private int _maxDepth = int.MinValue;
 	private int _functionCalls = 0;
+	private PlayerType _currentPlayer = PlayerType.Human;
 	private PlayerType _winner = PlayerType.None;
 	private Difficulty _difficulty = Difficulty.None;
 	private Vector2 _mousePosition = Vector2.zero;
@@ -97,8 +96,8 @@ public class TicTacToe : MonoBehaviour
 
 				if(Physics.Raycast(ray, out RaycastHit hit, detectDistance, textContainerMask.value))
 				{
+					_currentPlayer = PlayerType.Human;
 					TextContainer textContainer = hit.transform.GetComponent<TextContainer>();
-
 					for(int i = 0; i < textContainers.Count; i++)
 					{
 						var row = textContainers[i];
@@ -107,19 +106,23 @@ public class TicTacToe : MonoBehaviour
 						{
 							_board[i][j] = PlayerType.Human;
 							PrintRequiredText(_board[i][j],textContainer);
-							switch(_difficulty)
+
+							if(!Winning(PlayerType.Human))
 							{
-								case Difficulty.Easy:
-													 ChooseMove(easyRandomMoveProb);
-													 break;
-								
-								case Difficulty.Medium:
-													 ChooseMove(medRandomMoveProb);
-													 break;
-													
-								case Difficulty.Hard:
-													 ChooseMove(hardRandomMoveProb);
-													 break;
+								switch(_difficulty)
+								{
+									case Difficulty.Easy:
+														 ChooseMove(easyRandomMoveProb);
+														 break;
+
+									case Difficulty.Medium:
+														 ChooseMove(medRandomMoveProb);
+														 break;
+
+									case Difficulty.Hard:
+														 ChooseMove(hardRandomMoveProb);
+														 break;
+								}
 							}
 							
 							textContainer.OnClick?.Invoke();
@@ -281,14 +284,24 @@ public class TicTacToe : MonoBehaviour
 
 		textContainer.OnClick?.Invoke();
 	}
+
+	private IEnumerator PrintEnemyMove(int moveX, int moveY)
+	{
+		_currentPlayer = PlayerType.Computer;
+		yield return new WaitForSeconds(enemyMoveTimeInterval);
+		PrintRequiredText(_board[moveX][moveY], textContainers[moveX].elements[moveY]);
+		_currentPlayer = PlayerType.Human;
+	}
     
 
 	private void ChooseMove(float randomMoveProbability)
 	{
+
 		if(CountVacants() == 0)
 		{
 			return;
 		}
+
 		Random.InitState((int)System.DateTime.Now.Ticks);
 
 		float probability = Random.value;
@@ -320,7 +333,8 @@ public class TicTacToe : MonoBehaviour
 		}
 
 		_board[moveX][moveY] = PlayerType.Computer;
-		PrintRequiredText(_board[moveX][moveY], textContainers[moveX].elements[moveY]);
+		StartCoroutine(PrintEnemyMove(moveX, moveY));
+		
 	 }
 	 private void BestMove()
 	 {
@@ -354,7 +368,7 @@ public class TicTacToe : MonoBehaviour
 		if(moveX != -1 && moveY != -1)
 		{
 			_board[moveX][moveY] = PlayerType.Computer;
-			PrintRequiredText(_board[moveX][moveY], textContainers[moveX].elements[moveY]);
+			StartCoroutine(PrintEnemyMove(moveX, moveY));
 		}
 		 
 	 }
